@@ -1,70 +1,66 @@
 <?php
 
-namespace Tlconseil\SystempayBundle\Entity;
+namespace Tlconseil\SystempayBundle\Document;
 
-use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 
 /**
  * Transaction.
  *
- * @ORM\Table(name="systempay_transaction")
- * @ORM\Entity()
+ * @MongoDB\Document(collection="systempay_transaction")
  */
 class Transaction
 {
     /**
-     * @var
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
+     * @MongoDB\Id(strategy="INCREMENT", type="int")
      */
     private $id;
 
     /**
      * @var string
-     * @ORM\Column(name="status_code", type="string", length=255, nullable=true)
+     * @MongoDB\Field(type="string", name="status_code", nullable=true)
      */
     private $status;
 
     /**
      * @var int
-     * @ORM\Column(name="amount", type="integer")
+     * @MongoDB\Field(type="int", name="amount")
      */
     private $amount;
 
     /**
      * @var int
-     * @ORM\Column(name="currency", type="integer")
+     * @MongoDB\Field(type="int", name="currency")
      */
     private $currency;
 
     /**
      * @var \DateTime
-     * @ORM\Column(name="created_at", type="datetime")
+     * @MongoDB\Field(type="date", name="created_at")
      */
     private $createdAt;
 
     /**
      * @var \DateTime
-     * @ORM\Column(name="updated_at", type="datetime")
+     * @MongoDB\Field(type="date", name="updated_at")
      */
     private $updatedAt;
 
     /**
      * @var string
-     * @ORM\Column(name="log_response", type="text", nullable=true)
+     * @MongoDB\Field(type="string", name="log_response", nullable=true)
      */
     private $logResponse;
 
     /**
      * @var bool
-     * @ORM\Column(name="paid", type="boolean")
+     * @MongoDB\Field(type="boolean", name="paid")
      */
     private $paid;
 
     /**
      * @var bool
-     * @ORM\Column(name="refunded", type="boolean")
+     * @MongoDB\Field(type="boolean", name="refunded")
      */
     private $refunded;
 

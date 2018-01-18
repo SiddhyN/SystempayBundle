@@ -2,14 +2,13 @@
 
 namespace Tlconseil\SystempayBundle\Service;
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Request;
-use Tlconseil\SystempayBundle\Entity\Transaction;
+use Tlconseil\SystempayBundle\Document\Transaction;
 
 /**
- * Class SystemPay
- * @package Tlconseil\SystempayBundle\Service
+ * Class SystemPay.
  */
 class SystemPay
 {
@@ -21,7 +20,7 @@ class SystemPay
     /**
      * @var array
      */
-    private $mandatoryFields = array(
+    private $mandatoryFields = [
         'action_mode' => null,
         'ctx_mode' => null,
         'page_action' => null,
@@ -31,7 +30,7 @@ class SystemPay
         'redirect_success_message' => null,
         'redirect_error_message' => null,
         'url_return' => null,
-    );
+    ];
 
     /**
      * @var string
@@ -39,30 +38,32 @@ class SystemPay
     private $key;
 
     /**
-     * @var EntityManager
+     * @var ObjectManager
      */
-    private $entityManager;
+    private $objectManager;
 
     /**
      * @var Transaction
      */
     private $transaction;
 
-    public function __construct(EntityManager $entityManager, Container $container)
+    public function __construct(ObjectManager $objectManager, Container $container)
     {
-        $this->entityManager = $entityManager;
-        foreach ($this->mandatoryFields as $field => $value)
+        $this->objectManager = $objectManager;
+        foreach ($this->mandatoryFields as $field => $value) {
             $this->mandatoryFields[$field] = $container->getParameter(sprintf('tlconseil_systempay.%s', $field));
-        if ($this->mandatoryFields['ctx_mode'] == "TEST")
+        }
+        if ('TEST' == $this->mandatoryFields['ctx_mode']) {
             $this->key = $container->getParameter('tlconseil_systempay.key_dev');
-        else
+        } else {
             $this->key = $container->getParameter('tlconseil_systempay.key_prod');
-
+        }
     }
 
     /**
      * @param $currency
      * @param $amount
+     *
      * @return Transaction
      */
     private function newTransaction($currency, $amount)
@@ -74,20 +75,22 @@ class SystemPay
         $transaction->setUpdatedAt(new \DateTime());
         $transaction->setPaid(false);
         $transaction->setRefunded(false);
-        $transaction->setStatus("");
-        $this->entityManager->persist($transaction);
-        $this->entityManager->flush();
+        $transaction->setStatus('');
+        $this->objectManager->persist($transaction);
+        $this->objectManager->flush();
+
         return $transaction;
     }
 
     /**
      * @param int $currency
-     * Euro => 978
-     * US Dollar => 840
+     *                      Euro => 978
+     *                      US Dollar => 840
      * @param int $amount
-     * Use int :
-     * 10,28 € = 1028
-     * 95 € = 9500
+     *                      Use int :
+     *                      10,28 € = 1028
+     *                      95 € = 9500
+     *
      * @return $this
      */
     public function init($currency = 978, $amount = 1000)
@@ -97,6 +100,7 @@ class SystemPay
         $this->mandatoryFields['currency'] = $currency;
         $this->mandatoryFields['trans_id'] = sprintf('%06d', $this->transaction->getId());
         $this->mandatoryFields['trans_date'] = gmdate('YmdHis');
+
         return $this;
     }
 
@@ -105,13 +109,17 @@ class SystemPay
      * remove "vads_" prefix and form an array that will looks like :
      * trans_id => x
      * cust_email => xxxxxx@xx.xx
+     *
      * @return $this
      */
     public function setOptionnalFields($fields)
     {
-        foreach ($fields as $field => $value)
-            if (empty($this->mandatoryFields[$field]))
+        foreach ($fields as $field => $value) {
+            if (empty($this->mandatoryFields[$field])) {
                 $this->mandatoryFields[$field] = $value;
+            }
+        }
+
         return $this;
     }
 
@@ -121,11 +129,13 @@ class SystemPay
     public function getResponse()
     {
         $this->mandatoryFields['signature'] = $this->getSignature();
+
         return $this->mandatoryFields;
     }
 
     /**
      * @param Request $request
+     *
      * @return bool
      */
     public function responseHandler(Request $request)
@@ -133,33 +143,34 @@ class SystemPay
         $query = $request->request->all();
 
         // Check signature
-        if (!empty($query['signature']))
-        {
+        if (!empty($query['signature'])) {
             $signature = $query['signature'];
-            unset ($query['signature']);
-            if ($signature == $this->getSignature($query))
-            {
-                $transaction = $this->findTransaction(request);
+            unset($query['signature']);
+            if ($signature == $this->getSignature($query)) {
+                $transaction = $this->findTransaction($request);
                 $transaction->setStatus($query['vads_trans_status']);
-                if ($query['vads_trans_status'] == "AUTHORISED")
+                if ('AUTHORISED' == $query['vads_trans_status']) {
                     $transaction->setPaid(true);
+                }
                 $transaction->setUpdatedAt(new \DateTime());
                 $transaction->setLogResponse(json_encode($query));
-                $this->entityManager->flush();
+                $this->objectManager->flush();
+
                 return true;
             }
         }
+
         return false;
     }
-    
+
     /**
      * @return Transaction
      */
     public function findTransaction(Request $request)
     {
         $query = $request->request->all();
-        $this->transaction = $this->entityManager->getRepository('TlconseilSystempayBundle:Transaction')->find($query['vads_trans_id']);
-        
+        $this->transaction = $this->objectManager->getRepository('TlconseilSystempayBundle:Transaction')->find($query['vads_trans_id']);
+
         return $this->transaction;
     }
 
@@ -181,30 +192,37 @@ class SystemPay
 
     /**
      * @param array $fields
+     *
      * @return array
      */
     private function setPrefixToFields(array $fields)
     {
-        $newTab = array();
-        foreach ($fields as $field => $value)
+        $newTab = [];
+        foreach ($fields as $field => $value) {
             $newTab[sprintf('vads_%s', $field)] = $value;
+        }
+
         return $newTab;
     }
 
     /**
      * @param null $fields
+     *
      * @return string
      */
     private function getSignature($fields = null)
     {
-        if (!$fields)
+        if (!$fields) {
             $fields = $this->mandatoryFields = $this->setPrefixToFields($this->mandatoryFields);
+        }
         ksort($fields);
-        $contenu_signature = "";
-        foreach ($fields as $field => $value)
-                $contenu_signature .= $value."+";
+        $contenu_signature = '';
+        foreach ($fields as $field => $value) {
+            $contenu_signature .= $value . '+';
+        }
         $contenu_signature .= $this->key;
         $signature = sha1($contenu_signature);
+
         return $signature;
     }
 }

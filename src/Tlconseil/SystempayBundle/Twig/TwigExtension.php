@@ -6,8 +6,7 @@ use Twig_Extension;
 use Twig_SimpleFunction;
 
 /**
- * Class TwigExtension
- * @package Tlconseil\SystempayBundle\Twig
+ * Class TwigExtension.
  */
 class TwigExtension extends Twig_Extension
 {
@@ -16,20 +15,23 @@ class TwigExtension extends Twig_Extension
      */
     public function getFunctions()
     {
-        return array(
-            new Twig_SimpleFunction('systempayForm', array($this, 'systempayForm')),
-        );
+        return [
+            new Twig_SimpleFunction('systempayForm', [$this, 'systempayForm']),
+        ];
     }
 
     /**
      * @param $fields
+     *
      * @return string
      */
     public function systempayForm($fields)
     {
         $inputs = '';
-        foreach ($fields as $field => $value)
+        foreach ($fields as $field => $value) {
             $inputs .= sprintf('<input type="hidden" name="%s" value="%s">', $field, $value);
+        }
+
         return $inputs;
     }
 

@@ -153,7 +153,7 @@ class SystemPay
                     $transaction->setPaid(true);
                 }
                 $transaction->setUpdatedAt(new \DateTime());
-                $transaction->setLogResponse(json_encode($query));
+                $transaction->setLogResponse($query);
                 $this->objectManager->flush();
 
                 return true;

@@ -48,7 +48,7 @@ class Transaction
 
     /**
      * @var string
-     * @MongoDB\Field(type="string", name="log_response", nullable=true)
+     * @MongoDB\Field(type="hash", name="log_response", nullable=true)
      */
     private $logResponse;
 
